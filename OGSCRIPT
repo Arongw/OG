@@ -1,108 +1,14 @@
--- Función para recoger recursos
-local function pickup(resource)
-    -- Implementa la lógica para recoger recursos
-end
-
--- Función para teleportar al jugador a una posición
-local function teleportTo(position, speed, checkFunc)
-    -- Implementa la lógica para teleportar al jugador a una posición con velocidad y verificación de condición
-end
-
--- Función para mover al jugador a una posición
-local function moveTo(position)
-    -- Implementa la lógica para mover al jugador a una posición
-end
-
--- Función para desactivar el modo barco (boat)
-local function disableBoat()
-    -- Implementa la lógica para desactivar el modo barco
-end
-
--- Función para activar el modo barco (boat)
-local function enableBoat()
-    -- Implementa la lógica para activar el modo barco
-end
-
--- Conexión del Autofarm
-autofarm:ConnectSettingUpdate("Enabled", function()
-    if not autofarm_enabled.Value then return end
-    
-    local tppos = root.Position
-    hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-    
-    while window.ScreenGui.Parent and autofarm_enabled.Value do
-        rs.PostSimulation:Wait()
-        disableBoat()
-        
-        -- Lógica para buscar y seleccionar recursos cercanos
-        local search = autofarm_resources.Value:split(",")
-        for i, v in pairs(search) do
-            search[i] = trim(v)
-        end
-        local closest
-        local closestmag = math.huge
-        local frp = root.Position - Vector3.new(0, root.Position.Y, 0)
-        for i, v in pairs(workspace.Resources:GetChildren()) do
-            if v:IsA("Model") and table.find(search, v.Name) and v:GetPivot().Position ~= Vector3.new() then
-                local fpos = v:GetPivot().Position - Vector3.new(0, v:GetPivot().Position.Y, 0)
-                local dist = (fpos - frp).Magnitude
-                if dist < closestmag then
-                    local cdist = getAntsDistance(v:GetPivot().Position)
-                    if cdist > autofarm_antrange.Value then
-                        closest = v
-                        closestmag = dist
-                    end
-                end
-            end
-        end
-        
-        -- Lógica de activación del aura kill y destrucción de recursos cercanos
-        if closest then
-            local auraKillRange = 10 -- Define el radio de efecto del aura kill
-            local resourcesInRange = workspace.Resources:GetChildren()
-            for i, resource in pairs(resourcesInRange) do
-                local distanceToResource = (resource:GetPivot().Position - root.Position).Magnitude
-                if distanceToResource <= auraKillRange then
-                    resource:Destroy()
-                end
-            end
-        end
-        
-        -- Lógica para recoger los recursos cercanos
-        local resources = workspace.Resources:GetChildren()
-        for i, resource in pairs(resources) do
-            if resource:IsA("Model") then
-                local distanceToResource = (resource:GetPivot().Position - root.Position).Magnitude
-                if distanceToResource < autofarm_range.Value then
-                    pickup(resource)
-                end
-            end
-        end
-        
-        -- Lógica para mover al jugador hacia el recurso y recolectar los recursos
-        if closest then
-            local resourcePosition = closest:GetPivot().Position
-            teleportTo(resourcePosition, autofarm_speed.Value, function()
-                -- Verificar si el jugador está cerca del recurso
-                local distanceToResource = (resourcePosition - root.Position).Magnitude
-                return distanceToResource < 3 -- Valor de tolerancia para estar cerca del recurso
-            end)
-            -- Recolectar recursos cercanos mientras se está cerca del recurso principal
-            local nearbyResources = workspace.Resources:GetChildren()
-            for i, nearbyResource in pairs(nearbyResources) do
-                if nearbyResource:IsA("Model") then
-                    local distanceToNearbyResource = (nearbyResource:GetPivot().Position - root.Position).Magnitude
-                    if distanceToNearbyResource < autofarm_range.Value then
-                        pickup(nearbyResource)
-                    end
-                end
-            end
-        else
-            -- Si no hay recursos cercanos, esperar o teleportarse a otro lugar
-            -- (Implementa la lógica para esperar o teleportarse según lo necesites)
+-- Función para golpear nodos de recursos cercanos (Aura Kill)
+local function auraKill()
+    local auraKillRange = 10 -- Define el radio de efecto del aura kill
+    local resourcesInRange = workspace.Resources:GetChildren()
+    for i, resource in pairs(resourcesInRange) do
+        local distanceToResource = (resource:GetPivot().Position - root.Position).Magnitude
+        if distanceToResource <= auraKillRange then
+            -- Implementa la lógica para golpear el recurso
+            -- Por ejemplo:
+            -- resource:Hit()
+            -- O la función correspondiente para golpear el recurso en tu juego
         end
     end
-    
-    hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
-    enableBoat()
-end)
+end
