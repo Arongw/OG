@@ -35,33 +35,72 @@ autofarm:ConnectSettingUpdate("Enabled", function()
         disableBoat()
         
         -- Lógica para buscar y seleccionar recursos cercanos
-        -- (Código omitido por brevedad)
-        
-        -- Lógica de búsqueda y selección de recursos
+        local search = autofarm_resources.Value:split(",")
+        for i, v in pairs(search) do
+            search[i] = trim(v)
+        end
+        local closest
+        local closestmag = math.huge
+        local frp = root.Position - Vector3.new(0, root.Position.Y, 0)
+        for i, v in pairs(workspace.Resources:GetChildren()) do
+            if v:IsA("Model") and table.find(search, v.Name) and v:GetPivot().Position ~= Vector3.new() then
+                local fpos = v:GetPivot().Position - Vector3.new(0, v:GetPivot().Position.Y, 0)
+                local dist = (fpos - frp).Magnitude
+                if dist < closestmag then
+                    local cdist = getAntsDistance(v:GetPivot().Position)
+                    if cdist > autofarm_antrange.Value then
+                        closest = v
+                        closestmag = dist
+                    end
+                end
+            end
+        end
         
         -- Lógica de activación del aura kill y destrucción de recursos cercanos
         if closest then
-            -- Obtener todos los recursos dentro de un radio determinado alrededor del jugador
             local auraKillRange = 10 -- Define el radio de efecto del aura kill
             local resourcesInRange = workspace.Resources:GetChildren()
             for i, resource in pairs(resourcesInRange) do
-                -- Verificar si el recurso está dentro del radio de efecto del aura kill
                 local distanceToResource = (resource:GetPivot().Position - root.Position).Magnitude
                 if distanceToResource <= auraKillRange then
-                    -- Destruir el recurso
                     resource:Destroy()
                 end
             end
         end
         
         -- Lógica para recoger los recursos cercanos
-        -- (Código omitido por brevedad)
+        local resources = workspace.Resources:GetChildren()
+        for i, resource in pairs(resources) do
+            if resource:IsA("Model") then
+                local distanceToResource = (resource:GetPivot().Position - root.Position).Magnitude
+                if distanceToResource < autofarm_range.Value then
+                    pickup(resource)
+                end
+            end
+        end
         
         -- Lógica para mover al jugador hacia el recurso y recolectar los recursos
-        -- (Código omitido por brevedad)
-        
-        -- Lógica para esperar y continuar recolectando o teleportarse a otro lugar si no hay recursos disponibles
-        -- (Código omitido por brevedad)
+        if closest then
+            local resourcePosition = closest:GetPivot().Position
+            teleportTo(resourcePosition, autofarm_speed.Value, function()
+                -- Verificar si el jugador está cerca del recurso
+                local distanceToResource = (resourcePosition - root.Position).Magnitude
+                return distanceToResource < 3 -- Valor de tolerancia para estar cerca del recurso
+            end)
+            -- Recolectar recursos cercanos mientras se está cerca del recurso principal
+            local nearbyResources = workspace.Resources:GetChildren()
+            for i, nearbyResource in pairs(nearbyResources) do
+                if nearbyResource:IsA("Model") then
+                    local distanceToNearbyResource = (nearbyResource:GetPivot().Position - root.Position).Magnitude
+                    if distanceToNearbyResource < autofarm_range.Value then
+                        pickup(nearbyResource)
+                    end
+                end
+            end
+        else
+            -- Si no hay recursos cercanos, esperar o teleportarse a otro lugar
+            -- (Implementa la lógica para esperar o teleportarse según lo necesites)
+        end
     end
     
     hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
